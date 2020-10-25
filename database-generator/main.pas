@@ -18,6 +18,7 @@ type
   TDatabaseGenerator = class
   public const
     ConnectionName = 'SQLite_Ekon24';
+    DatabaseFileName = 'ekon24.sdb';
     DatabaseFolder = '..\database';
   private
     fDatabaseFullPath: string;
@@ -38,6 +39,7 @@ implementation
 uses
   Data.DB,
   System.Variants,
+  System.IOUtils,
   WinAPI.Windows;
 
 function PathCanonicalize(lpszDst: PChar; lpszSrc: PChar): LongBool; stdcall;
@@ -54,11 +56,13 @@ end;
 constructor TDatabaseGenerator.Create;
 var
   exePath: string;
-  aDatabasePath: string;
+  folderPath: string;
+  databasePath: string;
 begin
   exePath := ExtractFilePath(ParamStr(0));
-  aDatabasePath := exePath + DatabaseFolder + '\ekon24.sdb';
-  fDatabaseFullPath := CanonicalizePath(aDatabasePath);
+  folderPath := TPath.Combine(exePath,DatabaseFolder);
+  databasePath := TPath.Combine(folderPath, DatabaseFileName);
+  fDatabaseFullPath := CanonicalizePath(databasePath);
 end;
 
 procedure TDatabaseGenerator.AppendRows(aConnection: TFDConnection;
