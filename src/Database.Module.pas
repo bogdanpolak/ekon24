@@ -51,8 +51,6 @@ end;
 
 procedure TDataModule1.UpdateOrderDiscount(const aOrderId: Integer;
   aGrantedDiscount: Integer);
-var
-  level: Variant;
 begin
   FDConnection1.ExecSQL
     ('UPDATE Orders SET GrantedDiscount = :Discount  WHERE OrderId = :OrderId',
