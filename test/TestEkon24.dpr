@@ -10,10 +10,10 @@ uses
   TestInsight.DUnitX,
   {$ELSE}
   DUnitX.Loggers.Console,
-  DUnitX.Loggers.Xml.NUnit,
   {$ENDIF }
   DUnitX.TestFramework,
-  Test.DiscountCalculator in 'Test.DiscountCalculator.pas';
+  Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
+  Database.Module in '..\src\Database.Module.pas' {DataModule1: TDataModule};
 
 {$IFNDEF TESTINSIGHT}
 var
@@ -23,6 +23,7 @@ var
   nunitLogger : ITestLogger;
 {$ENDIF}
 begin
+  DataModule1 := TDataModule1.Create(nil);
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
 {$ELSE}
