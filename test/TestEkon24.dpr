@@ -25,7 +25,6 @@ var
   nunitLogger : ITestLogger;
 {$ENDIF}
 begin
-  DataModule1 := TDataModule1.Create(nil);
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
 {$ELSE}
@@ -71,5 +70,6 @@ begin
 end;
 
 begin
+  DataModule1 := TDataModule1.Create(nil);
   ExecuteTestProject();
 end.

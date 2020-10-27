@@ -12,17 +12,10 @@ object DataModule1: TDataModule1
   object fdqThresholds: TFDQuery
     Connection = FDConnection1
     SQL.Strings = (
-      'SELECT LimitBottom, Discount'
-      'FROM Thresholds where Level = :Level order by LimitBottom')
+      'SELECT Level, LimitBottom, Discount'
+      'FROM Thresholds order by Level, LimitBottom')
     Left = 136
     Top = 16
-    ParamData = <
-      item
-        Name = 'LEVEL'
-        DataType = ftString
-        ParamType = ptInput
-        Value = 'standard'
-      end>
   end
   object fdqOrderItems: TFDQuery
     Connection = FDConnection1
