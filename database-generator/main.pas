@@ -144,21 +144,20 @@ const
   CreateOrders = 'CREATE TABLE IF NOT EXISTS Orders (' +
   { } ' OrderId INTEGER PRIMARY KEY NOT NULL,' +
   { } ' CustomerId TEXT(20) NOT NULL,' +
+  { } ' GrantedDiscount INTEGER NOT NULL,' +
   { } ' OrderDate TEXT(40) NOT NULL)';
 
   CreateItems = 'CREATE TABLE IF NOT EXISTS Items (' +
   { } ' OrderId INTEGER NOT NULL,' +
   { } ' ProductId INTEGER NOT NULL,' +
-  { } ' UnitPrice NUMERIC NOT NULL,' +
-  { } ' Units INTEGER NOT NULL,' +
-  { } ' Deduction NUMERIC,' +
-  { } ' DeductedPrice NUMERIC,' +
-  { } ' Total NUMERCIC NOT NULL)';
+  { } ' UnitPrice DECIMAL(19, 4) NOT NULL,' +
+  { } ' DeductedPrice DECIMAL(19, 4),' +
+  { } ' Units INTEGER NOT NULL)';
 
   CreateThresholds = 'CREATE TABLE IF NOT EXISTS Thresholds (' +
   { } ' Level TEXT(10) NOT NULL,' +
-  { } ' LimitBottom NUMERIC NOT NULL,' +
-  { } ' Discount NUMERIC NOT NULL)';
+  { } ' LimitBottom DECIMAL(19, 4) NOT NULL,' +
+  { } ' Discount INTEGER NOT NULL)';
 
   CreateCustomers = 'CREATE TABLE IF NOT EXISTS Customers (' +
   { } ' CustomerId TEXT(20) PRIMARY KEY NOT NULL,' +
@@ -186,42 +185,42 @@ begin
   aConnection.StartTransaction;
   // ----------------------------------------------------
   AppendRows(aConnection, 'Orders', [
-    { } [1, 'PL3815422868', EncodeDate(2020, 08, 02)],
-    { } [2, 'DE136695976', EncodeDate(2020, 08, 05)],
-    { } [5, 'PL1124267312', EncodeDate(2020, 08, 08)],
-    { } [6, 'DE301204526', EncodeDate(2020, 08, 09)],
-    { } [7, 'PL5352679105', EncodeDate(2020, 08, 15)]]);
+    { } [1, 'PL3815422868', 0, EncodeDate(2020, 08, 02)],
+    { } [2, 'DE136695976', 0, EncodeDate(2020, 08, 05)],
+    { } [5, 'PL1124267312', 0, EncodeDate(2020, 08, 08)],
+    { } [6, 'DE301204526', 0, EncodeDate(2020, 08, 09)],
+    { } [7, 'PL5352679105', 0, EncodeDate(2020, 08, 15)]]);
   // ----------------------------------------------------
   AppendRows(aConnection, 'Items', [
-    { } [1, 25, 100.00, 20, Null(), Null(), 2000.00],
-    { } [1, 2, 90.00, 1, Null(), Null(), 90.00],
-    { } [1, 99, 120.00, 4, Null(), Null(), 480.00],
-    { } [2, 21, 100.00, 12, Null(), Null(), 1200],
-    { } [2, 31, 150.00, 3, Null(), Null(), 450.00],
-    { } [5, 22, 20.00, 50, Null(), Null(), 1000.00],
-    { } [5, 19, 170.00, 5, Null(), Null(), 850.00],
-    { } [5, 9, 25.00, 32, Null(), Null(), 800.00],
-    { } [5, 5, 140.00, 10, Null(), Null(), 1400.00],
-    { } [6, 23, 15.00, 10, Null(), Null(), 150.00],
-    { } [6, 18, 145.00, 2, Null(), Null(), 290.00],
-    { } [6, 8, 190.00, 1, Null(), Null(), 190.00],
-    { } [6, 11, 200.00, 2, Null(), Null(), 400.00],
-    { } [7, 12, 35.00, 10, Null(), Null(), 350.00],
-    { } [7, 13, 90.00, 2, Null(), Null(), 180.00],
-    { } [7, 7, 19.00, 5, Null(), Null(), 95.00],
-    { } [7, 6, 110.00, 4, Null(), Null(), 440.00]]);
+    { } [1, 25, 100.00, Null(), 20],
+    { } [1, 2, 90.00, Null(), 1],
+    { } [1, 99, 120.00, Null(), 4],
+    { } [2, 21, 100.00, Null(), 12],
+    { } [2, 31, 150.00, Null(), 3],
+    { } [5, 22, 20.00, Null(), 50],
+    { } [5, 19, 170.00, Null(), 5],
+    { } [5, 9, 25.00, Null(), 32],
+    { } [5, 5, 140.00, Null(), 10],
+    { } [6, 23, 15.00, Null(), 10],
+    { } [6, 18, 145.00, Null(), 2],
+    { } [6, 8, 190.00, Null(), 1],
+    { } [6, 11, 200.00, Null(), 2],
+    { } [7, 12, 35.00, Null(), 10],
+    { } [7, 13, 90.00, Null(), 2],
+    { } [7, 7, 19.00, Null(), 5],
+    { } [7, 6, 110.00, Null(), 4]]);
   // ----------------------------------------------------
   AppendRows(aConnection, 'Thresholds', [
-    { } ['standard', 1000.00, 0.02],
-    { } ['standard', 2000.00, 0.03],
-    { } ['standard', 3000.00, 0.04],
-    { } ['silver', 800.00, 0.02],
-    { } ['silver', 1500.00, 0.03],
-    { } ['silver', 2000.00, 0.05],
-    { } ['gold', 700.00, 0.02],
-    { } ['gold', 1000.00, 0.03],
-    { } ['gold', 1400.00, 0.05],
-    { } ['gold', 1900.00, 0.08]]);
+    { } ['standard', 1200.00, 2],
+    { } ['standard', 2000.00, 3],
+    { } ['standard', 3000.00, 4],
+    { } ['silver',  800.00, 2],
+    { } ['silver', 1500.00, 3],
+    { } ['silver', 2000.00, 5],
+    { } ['gold',  700.00, 2],
+    { } ['gold', 1000.00, 3],
+    { } ['gold', 1400.00, 5],
+    { } ['gold', 1900.00, 8]]);
   // ----------------------------------------------------
   AppendRows(aConnection, 'Customers', [
     { } ['PL1124267312', 'Modivo Sp. z o.o.', 'standard'],
