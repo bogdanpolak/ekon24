@@ -13,8 +13,10 @@ uses
   {$ENDIF }
   DUnitX.TestFramework,
   Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
-  Database.Module in '..\src\Database.Module.pas' {DataModule1: TDataModule};
+  Database.Module in '..\src\Database.Module.pas', {DataModule1: TDataModule}
+  Domain.DiscountCalculator in '..\src\Domain.DiscountCalculator.pas';
 
+procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
 var
   runner: ITestRunner;
@@ -66,4 +68,8 @@ begin
       System.Writeln(E.ClassName, ': ', E.Message);
   end;
 {$ENDIF}
+end;
+
+begin
+  ExecuteTestProject();
 end.
