@@ -3,7 +3,10 @@ unit Test.DiscountCalculator;
 interface
 
 uses
-  DUnitX.TestFramework, Database.Module;
+  DUnitX.TestFramework,
+  {}
+  Database.Module,
+  Domain.DiscountCalculator;
 
 {$M+}
 
@@ -12,6 +15,7 @@ type
   [TestFixture]
   TTestDiscountCalculator = class
   private
+    fDiscountCalculator: TDiscountCalculator;
   public
     [Setup]
     procedure Setup;
@@ -19,7 +23,7 @@ type
     procedure TearDown;
   published
     procedure GetCustomerLevel_ShouldEqualStandard;
-    procedure UpdateOrderDiscount_Granted4;
+    procedure OrderTotalValue_OrderId1;
   end;
 
 implementation
@@ -27,10 +31,12 @@ implementation
 procedure TTestDiscountCalculator.Setup;
 begin
   DataModule1.FDConnection1.Open();
+  fDiscountCalculator := TDiscountCalculator.Create()
 end;
 
 procedure TTestDiscountCalculator.TearDown;
 begin
+  fDiscountCalculator.Free();
 end;
 
 procedure TTestDiscountCalculator.GetCustomerLevel_ShouldEqualStandard;
@@ -41,16 +47,14 @@ begin
   Assert.AreEqual('standard', actual);
 end;
 
-procedure TTestDiscountCalculator.UpdateOrderDiscount_Granted4;
+procedure TTestDiscountCalculator.OrderTotalValue_OrderId1;
 var
-  orderid: Integer;
-  actual: Integer;
+  actual: Currency;
 begin
-  orderid := 5;
-  DataModule1.UpdateOrderDiscount(orderid, 4);
-  actual := DataModule1.FDConnection1.ExecSQLScalar
-    ('select GrantedDiscount from Orders where OrderId = :OrderID', [orderid]);
-  Assert.AreEqual(4, actual);
+  DataModule1.FDConnection1.StartTransaction;
+  actual := fDiscountCalculator.OrderTotalValue(1);
+  Assert.AreEqual(Currency(2371.60), actual, 0.0001);
+  DataModule1.FDConnection1.Commit;
 end;
 
 initialization

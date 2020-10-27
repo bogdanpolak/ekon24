@@ -72,4 +72,5 @@ end;
 begin
   DataModule1 := TDataModule1.Create(nil);
   ExecuteTestProject();
+  DataModule1.FDConnection1.Close;
 end.
