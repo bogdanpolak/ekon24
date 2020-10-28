@@ -17,10 +17,12 @@ type
     fdqThresholds: TFDQuery;
     fdqOrderItems: TFDQuery;
   private
+    function FindDiscount(const aLevel: string; aTotalValue: Currency): Integer;
   public
     function GetCustomerLevel(const aCustomerId: String): String;
     procedure UpdateOrderDiscount(const aOrderId: Integer;
       aGrantedDiscount: Integer);
+    function OrderTotalValue(aOrderId: Integer): Currency;
   end;
 
   ERepositoryError = class(Exception);
@@ -55,6 +57,96 @@ begin
   FDConnection1.ExecSQL
     ('UPDATE Orders SET GrantedDiscount = :Discount  WHERE OrderId = :OrderId',
     [aGrantedDiscount, aOrderId]);
+end;
+
+function TDataModuleMain.FindDiscount(const aLevel: string;
+  aTotalValue: Currency): Integer;
+  function InRange(aValue: Currency; aLimit1: Currency;
+    aLimit2: Currency): boolean;
+  begin
+    Result := (aLimit1 <= aValue) and (aValue < aLimit2);
+  end;
+
+var
+  DataSet: TFDQuery;
+  level: string;
+  limit1: Currency;
+  limit2: Currency;
+begin
+  DataSet := DataModuleMain.fdqThresholds;
+  DataSet.Open();
+  DataSet.First;
+  DataSet.Locate('Level', aLevel);
+  limit1 := 0;
+  Result := 0;
+  while not DataSet.Eof do
+  begin
+    level := DataSet.FieldByName('Level').AsString;
+    limit2 := DataSet.FieldByName('LimitBottom').AsCurrency;
+    if (level <> aLevel) or InRange(aTotalValue, limit1, limit2) then
+      Exit;
+    Result := DataSet.FieldByName('Discount').AsInteger;
+    limit1 := limit2;
+    DataSet.Next;
+  end;
+end;
+
+function RoundUnitPrice(price: Currency): Currency;
+begin
+  Result := Round(Int(price * 100))/100;
+end;
+
+function TDataModuleMain.OrderTotalValue(aOrderId: Integer): Currency;
+var
+  DataSet: TFDQuery;
+  customerId: string;
+  level: string;
+  unitprice: Currency;
+  units: Integer;
+  totalBeforeDeduction: Currency;
+  totalAfterDeduction: Currency;
+  discount: Integer;
+  isDeductable: boolean;
+  deductedPrice: Currency;
+begin
+  DataModuleMain.FDConnection1.Open();
+  DataModuleMain.fdqOrderItems.ParamByName('OrderId').AsInteger := aOrderId;
+  DataSet := DataModuleMain.fdqOrderItems;
+  DataSet.Open();
+  if DataSet.Eof then
+    Exit(0);
+  customerId := DataSet.FieldByName('CustomerId').AsString;
+  level := DataModuleMain.GetCustomerLevel(customerId);
+  totalBeforeDeduction := 0;
+  while not DataSet.Eof do
+  begin
+    unitprice := DataSet.FieldByName('UnitPrice').AsCurrency;
+    units := DataSet.FieldByName('Units').AsInteger;
+    totalBeforeDeduction := totalBeforeDeduction + unitprice * units;
+    DataSet.Next;
+  end;
+  discount := FindDiscount(level, totalBeforeDeduction);
+  totalAfterDeduction := 0;
+  DataSet.First;
+  DataModuleMain.FDConnection1.StartTransaction;
+  DataModuleMain.UpdateOrderDiscount(aOrderId, discount);
+  while not DataSet.Eof do
+  begin
+    unitprice := DataSet.FieldByName('UnitPrice').AsCurrency;
+    units := DataSet.FieldByName('Units').AsInteger;
+    isDeductable := (DataSet.FieldByName('AllowDeduction').AsInteger > 0);
+    if isDeductable then
+      deductedPrice := RoundUnitPrice(unitprice * ((100 - discount) / 100))
+    else
+      deductedPrice := unitprice;
+    totalAfterDeduction := totalAfterDeduction + deductedPrice * units;
+    DataSet.Edit;
+    DataSet.FieldByName('DeductedPrice').AsCurrency := deductedPrice;
+    DataSet.Post;
+    DataSet.Next;
+  end;
+  DataModuleMain.FDConnection1.Commit;
+  Result := totalAfterDeduction;
 end;
 
 end.

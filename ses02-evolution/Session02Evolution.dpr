@@ -14,8 +14,7 @@ uses
   {$ENDIF }
   DUnitX.TestFramework,
   Test.OrderCalculator in 'Test.OrderCalculator.pas',
-  DataModule.Main in 'src\DataModule.Main.pas' {DataModuleMain},
-  OrderCalculator in 'src\OrderCalculator.pas';
+  DataModule.Main in 'src\DataModule.Main.pas' {DataModuleMain};
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
