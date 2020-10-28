@@ -22,17 +22,6 @@ type
     procedure TestSetup;
     [Teardown]
     procedure TestTeardown;
-    [Test]
-    procedure IntegerationCalculate;
-    [Test]
-    [TestCase('[silver    0.00]', 'silver, 0, 0')]
-    [TestCase('[silver  999.99]', 'silver, 999.99, 0')]
-    [TestCase('[silver 1000.00]', 'silver, 1000.00, 1')]
-    [TestCase('[silver 1999.99]', 'silver, 1999.99, 1')]
-    [TestCase('[silver 2000.00]', 'silver, 2000, 3')]
-    [TestCase('[silver 3000.00]', 'silver, 3000, 9')]
-    procedure Calculate(const aLevel: String; aTotal: Currency;
-      aExpectedDiscount: Integer);
   end;
 
 implementation
@@ -40,41 +29,6 @@ implementation
 uses
   Data.DB,
   Datasnap.DBClient;
-
-type
-  TDataRow = TArray<Variant>;
-
-function GivenTresholdsDataSet(aOwner: TComponent;
-  const aRecordArray: TArray<TDataRow>): TDataSet;
-var
-  ds: TClientDataSet;
-  idxRow: Integer;
-  idxField: Integer;
-begin
-  ds := TClientDataSet.Create(aOwner);
-  with ds do
-  begin
-    FieldDefs.Add('Level', ftWideString, 10);
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'LimitBottom';
-      DataType := ftFMTBcd;
-      Precision := 19;
-      Size := 4;
-    end;
-    FieldDefs.Add('Discount', ftInteger);
-    CreateDataSet;
-  end;
-  for idxRow := 0 to High(aRecordArray) do
-  begin
-    ds.Append;
-    for idxField := 0 to High(aRecordArray[idxRow]) do
-      ds.Fields[idxField].Value := aRecordArray[idxRow][idxField];
-    ds.Post;
-  end;
-  ds.First;
-  Result := ds;
-end;
 
 procedure TTestDiscountCalculator.TestSetup;
 begin
@@ -84,34 +38,6 @@ end;
 procedure TTestDiscountCalculator.TestTeardown;
 begin
   fOwner.Free;
-end;
-
-procedure TTestDiscountCalculator.IntegerationCalculate;
-var
-  mainmodule: TMainDataModule;
-  actualDiscount: Integer;
-begin
-  mainmodule := TMainDataModule.Create(fOwner);
-  actualDiscount := mainmodule.CalculateDiscount('PL5352679105', 2500);
-  Assert.AreEqual(5,actualDiscount);
-  actualDiscount := mainmodule.CalculateDiscount('PL5352679105', 1999);
-  Assert.AreEqual(3,actualDiscount);
-end;
-
-procedure TTestDiscountCalculator.Calculate(const aLevel: String;
-  aTotal: Currency; aExpectedDiscount: Integer);
-var
-  ds: TDataSet;
-  actual: Integer;
-begin
-  ds := GivenTresholdsDataSet(nil, [
-    { } ['gold', 1000, 99],
-    { } ['silver', 1000, 1],
-    { } ['silver', 2000, 3],
-    { } ['silver', 3000, 9],
-    { } ['standard', 1000, 99]]);
-  actual := TDiscountCalculator.Calculate(ds, aLevel, aTotal);
-  Assert.AreEqual(aExpectedDiscount, actual);
 end;
 
 initialization

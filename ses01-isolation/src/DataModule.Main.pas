@@ -31,8 +31,8 @@ implementation
 uses
   DiscountCalculator;
 
-function BuildQuery(const connection: TFDConnection;
-  const aSql: string): TFDQuery;
+function BuildQuery(const connection: TFDConnection; const aSql: string)
+  : TFDQuery;
 begin
   Result := TFDQuery.Create(connection);
   Result.connection := connection;
@@ -51,7 +51,8 @@ end;
 function TMainDataModule.GetCustomerLevel(const aCustomerId: String): String;
 begin
   Result := FDConnection1.ExecSQLScalar
-    ('SELECT Level FROM Customers WHERE CustomerID = :customerID', [aCustomerId])
+    ('SELECT Level FROM Customers WHERE CustomerID = :customerID',
+    [aCustomerId])
 end;
 
 function InRange(aValue: Currency; aLimit1: Currency;
@@ -64,7 +65,8 @@ function TMainDataModule.CalculateDiscount(const aCustomerId: String;
   aTotalValue: Currency): Integer;
 var
   level: String;
-  limit1, limit2: Currency;
+  limit1: Currency;
+  limit2: Currency;
 begin
   level := GetCustomerLevel(aCustomerId);
   fdqThresholds.Open();
