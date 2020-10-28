@@ -1,4 +1,4 @@
-unit Test.DiscountCalculator;
+unit Test.OrderCalculator;
 
 interface
 
@@ -62,3 +62,4 @@ initialization
 TDUnitX.RegisterTestFixture(TTestDiscountCalculator);
 
 end.
+

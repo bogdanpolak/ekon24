@@ -1,4 +1,4 @@
-unit Domain.DiscountCalculator;
+unit OrderCalculator;
 
 interface
 
@@ -6,11 +6,11 @@ uses
   System.Classes,
   System.SysUtils,
   System.Generics.Collections,
-  {}
-  Database.Module;
+  { }
+  DataModule.Main;
 
 type
-  TDiscountCalculator = class
+  TOrderCalculator = class
   private
     // fDataModule: TDataModule1;
     function FindDiscount(const aLevel: String; aTotalValue: Currency): Integer;
@@ -26,12 +26,11 @@ uses
   FireDAC.Comp.Client,
   FireDAC.Stan.Param;
 
-constructor TDiscountCalculator.Create();
+constructor TOrderCalculator.Create();
 begin
-  // fDataModule := aDataModule;
 end;
 
-destructor TDiscountCalculator.Destroy;
+destructor TOrderCalculator.Destroy;
 begin
   inherited;
 end;
@@ -42,7 +41,7 @@ begin
   Result := (aLimit1 <= aValue) and (aValue < aLimit2);  
 end;
 
-function TDiscountCalculator.FindDiscount(const aLevel: string;
+function TOrderCalculator.FindDiscount(const aLevel: string;
   aTotalValue: Currency): Integer;
 var
   dataset: TFDQuery;
@@ -50,7 +49,7 @@ var
   limit1: Currency;
   limit2: Currency;
 begin
-  dataset := DataModule1.fdqThresholds;
+  dataset := DataModuleMain.fdqThresholds;
   dataset.Open();
   dataset.First;
   dataset.Locate('Level', aLevel);
@@ -73,7 +72,7 @@ begin
   Result := Round(Int(price * 100))/100;
 end;
 
-function TDiscountCalculator.OrderTotalValue(aOrderId: Integer): Currency;
+function TOrderCalculator.OrderTotalValue(aOrderId: Integer): Currency;
 var
   dataset: TFDQuery;
   customerId: string;
@@ -86,13 +85,14 @@ var
   isDeductable: Boolean;
   deductedPrice: Currency;
 begin
-  DataModule1.fdqOrderItems.ParamByName('OrderId').AsInteger := aOrderId;
-  dataset := DataModule1.fdqOrderItems;
+  DataModuleMain.FDConnection1.Open();
+  DataModuleMain.fdqOrderItems.ParamByName('OrderId').AsInteger := aOrderId;
+  dataset := DataModuleMain.fdqOrderItems;
   dataset.Open();
   if dataset.Eof then
     Exit(0);
   customerId := dataset.FieldByName('CustomerId').AsString;
-  level := DataModule1.GetCustomerLevel(customerId);
+  level := DataModuleMain.GetCustomerLevel(customerId);
   totalBeforeDeduction := 0;
   while not dataset.Eof do
   begin
@@ -104,8 +104,8 @@ begin
   discount := FindDiscount(level,totalBeforeDeduction);
   totalAfterDeduction := 0;
   dataset.First;
-  DataModule1.FDConnection1.StartTransaction;
-  DataModule1.UpdateOrderDiscount(aOrderId, discount);
+  DataModuleMain.FDConnection1.StartTransaction;
+  DataModuleMain.UpdateOrderDiscount(aOrderId, discount);
   while not dataset.Eof do
   begin
     unitprice := dataset.FieldByName('UnitPrice').AsCurrency;
@@ -121,7 +121,7 @@ begin
     dataset.Post;
     dataset.Next;
   end;
-  DataModule1.FDConnection1.Commit;
+  DataModuleMain.FDConnection1.Commit;
   Result := totalAfterDeduction;
 end;
 

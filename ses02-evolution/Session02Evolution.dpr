@@ -13,9 +13,9 @@ uses
   DUnitX.Loggers.Xml.NUnit,
   {$ENDIF }
   DUnitX.TestFramework,
-  Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
-  Database.Module in 'src\Database.Module.pas', {DataModule1: TDataModule}
-  Domain.DiscountCalculator in 'src\Domain.DiscountCalculator.pas';
+  Test.OrderCalculator in 'Test.OrderCalculator.pas',
+  DataModule.Main in 'src\DataModule.Main.pas' {DataModuleMain},
+  OrderCalculator in 'src\OrderCalculator.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
@@ -71,7 +71,10 @@ begin
 end;
 
 begin
-  DataModule1 := TDataModule1.Create(nil);
-  ExecuteTestProject();
-  DataModule1.FDConnection1.Close;
+  DataModuleMain := TDataModuleMain.Create(nil);
+  try
+    ExecuteTestProject();
+  finally
+    DataModuleMain.FDConnection1.Close;
+  end;
 end.

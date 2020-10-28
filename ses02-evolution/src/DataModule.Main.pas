@@ -1,4 +1,4 @@
-unit Database.Module;
+unit DataModule.Main;
 
 interface
 
@@ -12,7 +12,7 @@ uses
   FireDAC.Comp.Client, FireDAC.VCLUI.Wait;
 
 type
-  TDataModule1 = class(TDataModule)
+  TDataModuleMain = class(TDataModule)
     FDConnection1: TFDConnection;
     fdqThresholds: TFDQuery;
     fdqOrderItems: TFDQuery;
@@ -26,7 +26,7 @@ type
   ERepositoryError = class(Exception);
 
 var
-  DataModule1: TDataModule1;
+  DataModuleMain: TDataModuleMain;
 
 implementation
 
@@ -36,7 +36,7 @@ uses
 {%CLASSGROUP 'System.Classes.TPersistent'}
 {$R *.dfm}
 
-function TDataModule1.GetCustomerLevel(const aCustomerId: String): String;
+function TDataModuleMain.GetCustomerLevel(const aCustomerId: String): String;
 var
   level: Variant;
 begin
@@ -49,7 +49,7 @@ begin
   Result := level;
 end;
 
-procedure TDataModule1.UpdateOrderDiscount(const aOrderId: Integer;
+procedure TDataModuleMain.UpdateOrderDiscount(const aOrderId: Integer;
   aGrantedDiscount: Integer);
 begin
   FDConnection1.ExecSQL
