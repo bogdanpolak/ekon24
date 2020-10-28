@@ -1,4 +1,4 @@
-program TestEkon24;
+program Session02Evolution;
 
 {$IFNDEF TESTINSIGHT}
 {$APPTYPE CONSOLE}
@@ -13,8 +13,8 @@ uses
   {$ENDIF }
   DUnitX.TestFramework,
   Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
-  Database.Module in '..\src\Database.Module.pas', {DataModule1: TDataModule}
-  Domain.DiscountCalculator in '..\src\Domain.DiscountCalculator.pas';
+  Database.Module in 'src\Database.Module.pas', {DataModule1: TDataModule}
+  Domain.DiscountCalculator in 'src\Domain.DiscountCalculator.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
