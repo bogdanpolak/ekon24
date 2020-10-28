@@ -4,62 +4,49 @@ interface
 
 uses
   DUnitX.TestFramework,
-  {}
-  Database.Module,
-  Domain.DiscountCalculator;
+  { }
+  OrderCalculator;
 
 {$M+}
 
 type
 
   [TestFixture]
-  TTestDiscountCalculator = class
+  TTestOrderCalculator = class
   private
-    fDiscountCalculator: TDiscountCalculator;
+    fOrderCalculator: TOrderCalculator;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
   published
-    procedure GetCustomerLevel_ShouldEqualStandard;
-    procedure OrderTotalValue_OrderId1;
+    procedure OrderTotalValue_OrderId_1;
   end;
 
 implementation
 
-procedure TTestDiscountCalculator.Setup;
+procedure TTestOrderCalculator.Setup;
 begin
-  DataModule1.FDConnection1.Open();
-  fDiscountCalculator := TDiscountCalculator.Create()
+  fOrderCalculator := TOrderCalculator.Create()
 end;
 
-procedure TTestDiscountCalculator.TearDown;
+procedure TTestOrderCalculator.TearDown;
 begin
-  fDiscountCalculator.Free();
+  fOrderCalculator.Free();
 end;
 
-procedure TTestDiscountCalculator.GetCustomerLevel_ShouldEqualStandard;
-var
-  actual: string;
-begin
-  actual := DataModule1.GetCustomerLevel('DE136695976');
-  Assert.AreEqual('standard', actual);
-end;
-
-procedure TTestDiscountCalculator.OrderTotalValue_OrderId1;
+procedure TTestOrderCalculator.OrderTotalValue_OrderId_1;
 var
   actual: Currency;
 begin
-  DataModule1.FDConnection1.StartTransaction;
-  actual := fDiscountCalculator.OrderTotalValue(1);
+  actual := fOrderCalculator.OrderTotalValue(1);
   Assert.AreEqual(Currency(2371.60), actual, 0.0001);
-  DataModule1.FDConnection1.Commit;
 end;
 
 initialization
 
-TDUnitX.RegisterTestFixture(TTestDiscountCalculator);
+TDUnitX.RegisterTestFixture(TTestOrderCalculator);
 
 end.
 
