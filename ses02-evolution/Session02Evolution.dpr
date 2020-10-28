@@ -10,6 +10,7 @@ uses
   TestInsight.DUnitX,
   {$ELSE}
   DUnitX.Loggers.Console,
+  DUnitX.Loggers.Xml.NUnit,
   {$ENDIF }
   DUnitX.TestFramework,
   Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
