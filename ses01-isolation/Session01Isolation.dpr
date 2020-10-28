@@ -13,7 +13,9 @@ uses
   DUnitX.Loggers.Xml.NUnit,
   {$ENDIF }
   DUnitX.TestFramework,
-  Test.DiscountCalculator in 'Test.DiscountCalculator.pas';
+  Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
+  DataModule.Main in 'src\DataModule.Main.pas',
+  DiscountCalculator in 'src\DiscountCalculator.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}

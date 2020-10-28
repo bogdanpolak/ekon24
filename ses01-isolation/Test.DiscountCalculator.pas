@@ -4,15 +4,26 @@ interface
 
 uses
   DUnitX.TestFramework,
-  System.Classes;
+  System.Classes,
+  { }
+  DataModule.Main,
+  DiscountCalculator;
 
 {$M+}
 
 type
 
   [TestFixture]
-  TTestEkonDemo = class
+  TTestDiscountCalculator = class
+  private
+    fOwner: TComponent;
   public
+    [Setup]
+    procedure TestSetup;
+    [Teardown]
+    procedure TestTeardown;
+    [Test]
+    procedure IntegerationCalculate;
     [Test]
     [TestCase('[silver    0.00]', 'silver, 0, 0')]
     [TestCase('[silver  999.99]', 'silver, 999.99, 0')]
@@ -20,7 +31,7 @@ type
     [TestCase('[silver 1999.99]', 'silver, 1999.99, 1')]
     [TestCase('[silver 2000.00]', 'silver, 2000, 3')]
     [TestCase('[silver 3000.00]', 'silver, 3000, 9')]
-    procedure TestFindDiscount(const aLevel: String; aTotal: Currency;
+    procedure Calculate(const aLevel: String; aTotal: Currency;
       aExpectedDiscount: Integer);
   end;
 
@@ -30,8 +41,11 @@ uses
   Data.DB,
   Datasnap.DBClient;
 
+type
+  TDataRow = TArray<Variant>;
+
 function GivenTresholdsDataSet(aOwner: TComponent;
-  const aRecordArray: TArray < TArray < Variant >> ): TDataSet;
+  const aRecordArray: TArray<TDataRow>): TDataSet;
 var
   ds: TClientDataSet;
   idxRow: Integer;
@@ -62,38 +76,30 @@ begin
   Result := ds;
 end;
 
-function InRange(aValue: Currency; aLimit1: Currency;
-  aLimit2: Currency): boolean;
+procedure TTestDiscountCalculator.TestSetup;
 begin
-  Result := (aLimit1 <= aValue) and (aValue < aLimit2);
+  fOwner := TComponent.Create(nil);
 end;
 
-function FindDiscount(dsThresholds: TDataSet; const aLevel: string;
-  aTotalValue: Currency): Integer;
+procedure TTestDiscountCalculator.TestTeardown;
+begin
+  fOwner.Free;
+end;
+
+procedure TTestDiscountCalculator.IntegerationCalculate;
 var
-  level: string;
-  limit1: Currency;
-  limit2: Currency;
+  mainmodule: TMainDataModule;
+  actualDiscount: Integer;
 begin
-  dsThresholds.Locate('Level', aLevel, []);
-  limit1 := 0;
-  Result := 0;
-  while not dsThresholds.Eof do
-  begin
-    level := dsThresholds.FieldByName('Level').AsString;
-    limit2 := dsThresholds.FieldByName('LimitBottom').AsCurrency;
-    if (level <> aLevel) or InRange(aTotalValue, limit1, limit2) then
-      Exit;
-    Result := dsThresholds.FieldByName('Discount').AsInteger;
-    limit1 := limit2;
-    dsThresholds.Next;
-  end;
+  mainmodule := TMainDataModule.Create(fOwner);
+  actualDiscount := mainmodule.CalculateDiscount('PL5352679105', 2500);
+  Assert.AreEqual(5,actualDiscount);
+  actualDiscount := mainmodule.CalculateDiscount('PL5352679105', 1999);
+  Assert.AreEqual(3,actualDiscount);
 end;
 
-{ TTestEkonDemo }
-
-procedure TTestEkonDemo.TestFindDiscount(const aLevel: String; aTotal: Currency;
-  aExpectedDiscount: Integer);
+procedure TTestDiscountCalculator.Calculate(const aLevel: String;
+  aTotal: Currency; aExpectedDiscount: Integer);
 var
   ds: TDataSet;
   actual: Integer;
@@ -104,12 +110,12 @@ begin
     { } ['silver', 2000, 3],
     { } ['silver', 3000, 9],
     { } ['standard', 1000, 99]]);
-  actual := FindDiscount(ds, aLevel, aTotal);
+  actual := TDiscountCalculator.Calculate(ds, aLevel, aTotal);
   Assert.AreEqual(aExpectedDiscount, actual);
 end;
 
 initialization
 
-TDUnitX.RegisterTestFixture(TTestEkonDemo);
+TDUnitX.RegisterTestFixture(TTestDiscountCalculator);
 
 end.
