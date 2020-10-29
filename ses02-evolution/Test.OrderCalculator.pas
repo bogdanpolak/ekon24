@@ -4,8 +4,8 @@ interface
 
 uses
   DUnitX.TestFramework,
-  { }
-  DataModule.Main;
+  {}
+  DataModule.Orders;
 
 {$M+}
 
@@ -20,17 +20,24 @@ type
 
 implementation
 
+var
+  DataModuleOrders: TDataModuleOrders;
+
 procedure TTestOrderCalculator.OrderTotalValue_OrderId_1;
 var
   actual: Currency;
 begin
-  actual := DataModuleMain.OrderTotalValue(1);
+  actual := DataModuleOrders.OrderTotalValue(1);
   Assert.AreEqual(Currency(2371.60), actual, 0.0001);
 end;
 
 initialization
 
+DataModuleOrders := TDataModuleOrders.Create(nil);
 TDUnitX.RegisterTestFixture(TTestOrderCalculator);
 
-end.
+finalization
 
+DataModuleOrders.FDConnection1.Close;
+
+end.
