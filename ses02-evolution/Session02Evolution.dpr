@@ -7,14 +7,15 @@ program Session02Evolution;
 
 uses
   System.SysUtils,
-{$IFDEF TESTINSIGHT}
+  {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX,
-{$ELSE}
+  {$ELSE}
   DUnitX.Loggers.Console,
-{$ENDIF }
+  {$ENDIF }
   DUnitX.TestFramework,
-  Test.OrderCalculator in 'Test.OrderCalculator.pas',
-  DataModule.Orders in 'src\DataModule.Orders.pas';
+  Test.DataModuleOrders in 'Test.DataModuleOrders.pas',
+  DataModule.Orders in 'src\DataModule.Orders.pas',
+  DataModule.Connection in 'src\DataModule.Connection.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
@@ -72,5 +73,12 @@ begin
 end;
 
 begin
-  ExecuteTestProject();
+  DataModuleConnection := TDataModuleConnection.Create(nil);
+  DataModuleConnection.OpenConnection();
+  try
+    ExecuteTestProject();
+  finally
+    DataModuleConnection.Free;
+  end;
+
 end.

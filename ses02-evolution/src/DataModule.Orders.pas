@@ -15,14 +15,17 @@ uses
   FireDAC.Comp.Client, FireDAC.VCLUI.Wait;
 
 type
-  TDataModuleOrders = class(TComponent)
+  TDataModuleOrders = class
   private
+    fConnection: TFDConnection;
+    fOwner: TComponent;
+    function BuildFDQuery(const aSql: string): TFDQuery;
     function FindDiscount(const aLevel: string; aTotalValue: Currency): Integer;
   public
-    FDConnection1: TFDConnection;
     fdqThresholds: TFDQuery;
     fdqOrderItems: TFDQuery;
-    constructor Create(aOwner: TComponent); override;
+    constructor Create(aConnection: TFDConnection);
+    destructor Destroy; override;
     function GetCustomerLevel(const aCustomerId: String): String;
     procedure UpdateOrderDiscount(const aOrderId: Integer;
       aGrantedDiscount: Integer);
@@ -33,23 +36,21 @@ type
 
 implementation
 
-function BuildFDQuery(const connection: TFDConnection; const aSql: string)
-  : TFDQuery;
+function TDataModuleOrders.BuildFDQuery(const aSql: string): TFDQuery;
 begin
-  Result := TFDQuery.Create(connection);
-  Result.connection := connection;
+  Result := TFDQuery.Create(fOwner);
+  Result.connection := fConnection;
   Result.SQL.Text := aSql;
 end;
 
-constructor TDataModuleOrders.Create(aOwner: TComponent);
+constructor TDataModuleOrders.Create(aConnection: TFDConnection);
 begin
-  inherited;
-  FDConnection1 := TFDConnection.Create(self);
-  FDConnection1.ConnectionDefName := 'SQLite_Ekon24';
-  fdqThresholds := BuildFDQuery(FDConnection1,
+  fConnection := aConnection;
+  fOwner := TComponent.Create(nil);
+  fdqThresholds := BuildFDQuery(
     'SELECT Level, LimitBottom, Discount FROM Thresholds' +
     ' ORDER BY Level, LimitBottom');
-  fdqOrderItems := BuildFDQuery(FDConnection1,
+  fdqOrderItems := BuildFDQuery(
     'SELECT' +
     ' Items.ProductId, Items.UnitPrice, Items.DeductedPrice, Items.Units,' +
     ' Orders.CustomerId, Orders.OrderDate,' +
@@ -59,11 +60,17 @@ begin
     ' WHERE Orders.OrderId = :OrderId');
 end;
 
+destructor TDataModuleOrders.Destroy;
+begin
+  fOwner.Free;
+  inherited;
+end;
+
 function TDataModuleOrders.GetCustomerLevel(const aCustomerId: String): String;
 var
   level: Variant;
 begin
-  level := FDConnection1.ExecSQLScalar
+  level := fConnection.ExecSQLScalar
     ('SELECT Level FROM customers WHERE CustomerId = :customerid',
     [aCustomerId]);
   if level = Null() then
@@ -75,7 +82,7 @@ end;
 procedure TDataModuleOrders.UpdateOrderDiscount(const aOrderId: Integer;
   aGrantedDiscount: Integer);
 begin
-  FDConnection1.ExecSQL
+  fConnection.ExecSQL
     ('UPDATE Orders SET GrantedDiscount = :Discount  WHERE OrderId = :OrderId',
     [aGrantedDiscount, aOrderId]);
 end;
@@ -144,7 +151,7 @@ begin
   discount := FindDiscount(level, totalBeforeDeduction);
   totalAfterDeduction := 0;
   fdqOrderItems.First;
-  FDConnection1.StartTransaction;
+  fConnection.StartTransaction;
   UpdateOrderDiscount(aOrderId, discount);
   while not fdqOrderItems.Eof do
   begin
@@ -161,7 +168,7 @@ begin
     fdqOrderItems.Post;
     fdqOrderItems.Next;
   end;
-  FDConnection1.Commit;
+  fConnection.Commit;
   Result := totalAfterDeduction;
 end;
 
