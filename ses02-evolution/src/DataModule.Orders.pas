@@ -20,7 +20,6 @@ type
     fConnection: TFDConnection;
     fOwner: TComponent;
     function BuildFDQuery(const aSql: string): TFDQuery;
-    function FindDiscount(const aLevel: string; aTotalValue: Currency): Integer;
   public
     fdqThresholds: TFDQuery;
     fdqOrderItems: TFDQuery;
@@ -29,7 +28,7 @@ type
     function GetCustomerLevel(const aCustomerId: String): String;
     procedure UpdateOrderDiscount(const aOrderId: Integer;
       aGrantedDiscount: Integer);
-    function OrderTotalValue(aOrderId: Integer): Currency;
+    function CalculateOrderTotalValue(aOrderId: Integer): Currency;
   end;
 
   ERepositoryError = class(Exception);
@@ -47,11 +46,11 @@ constructor TDataModuleOrders.Create(aConnection: TFDConnection);
 begin
   fConnection := aConnection;
   fOwner := TComponent.Create(nil);
-  fdqThresholds := BuildFDQuery(
-    'SELECT Level, LimitBottom, Discount FROM Thresholds' +
+  fdqThresholds := BuildFDQuery
+    ('SELECT Level, LimitBottom, Discount FROM Thresholds' +
     ' ORDER BY Level, LimitBottom');
-  fdqOrderItems := BuildFDQuery(
-    'SELECT' +
+  fdqOrderItems := BuildFDQuery
+    ('SELECT' +
     ' Items.ProductId, Items.UnitPrice, Items.DeductedPrice, Items.Units,' +
     ' Orders.CustomerId, Orders.OrderDate,' +
     ' Products.Name, Products.AllowDeduction' + ' FROM Items' +
@@ -87,50 +86,34 @@ begin
     [aGrantedDiscount, aOrderId]);
 end;
 
-function TDataModuleOrders.FindDiscount(const aLevel: string;
-  aTotalValue: Currency): Integer;
-  function InRange(aValue: Currency; aLimit1: Currency;
-    aLimit2: Currency): boolean;
-  begin
-    Result := (aLimit1 <= aValue) and (aValue < aLimit2);
+type
+  TCurrencyRecordHelper = record helper for Currency
+    function IsInRange(aLimit1: Currency; aLimit2: Currency): boolean;
   end;
 
-var
-  level: string;
-  limit1: Currency;
-  limit2: Currency;
+function TCurrencyRecordHelper.IsInRange(aLimit1: Currency;
+  aLimit2: Currency): boolean;
 begin
-  fdqThresholds.Open();
-  fdqThresholds.First;
-  fdqThresholds.Locate('Level', aLevel);
-  limit1 := 0;
-  Result := 0;
-  while not fdqThresholds.Eof do
-  begin
-    level := fdqThresholds.FieldByName('Level').AsString;
-    limit2 := fdqThresholds.FieldByName('LimitBottom').AsCurrency;
-    if (level <> aLevel) or InRange(aTotalValue, limit1, limit2) then
-      Exit;
-    Result := fdqThresholds.FieldByName('Discount').AsInteger;
-    limit1 := limit2;
-    fdqThresholds.Next;
-  end;
+  Result := (aLimit1 <= self) and (self < aLimit2);
 end;
 
 function RoundUnitPrice(price: Currency): Currency;
 begin
-  Result := Round(Int(price * 100))/100;
+  Result := Round(Int(price * 100)) / 100;
 end;
 
-function TDataModuleOrders.OrderTotalValue(aOrderId: Integer): Currency;
+function TDataModuleOrders.CalculateOrderTotalValue(aOrderId: Integer)
+  : Currency;
 var
   customerId: string;
   level: string;
   unitprice: Currency;
   units: Integer;
   totalBeforeDeduction: Currency;
-  totalAfterDeduction: Currency;
+  limit1: Currency;
+  limit2: Currency;
   discount: Integer;
+  totalAfterDeduction: Currency;
   isDeductable: boolean;
   deductedPrice: Currency;
 begin
@@ -148,7 +131,21 @@ begin
     totalBeforeDeduction := totalBeforeDeduction + unitprice * units;
     fdqOrderItems.Next;
   end;
-  discount := FindDiscount(level, totalBeforeDeduction);
+  fdqThresholds.Open();
+  fdqThresholds.First;
+  fdqThresholds.Locate('Level', level);
+  limit1 := 0;
+  discount := 0;
+  while not fdqThresholds.Eof do
+  begin
+    limit2 := fdqThresholds.FieldByName('LimitBottom').AsCurrency;
+    if (level <> fdqThresholds.FieldByName('Level').AsString) or
+      (totalBeforeDeduction.IsInRange(limit1, limit2)) then
+      break;
+    discount := fdqThresholds.FieldByName('Discount').AsInteger;
+    limit1 := limit2;
+    fdqThresholds.Next;
+  end;
   totalAfterDeduction := 0;
   fdqOrderItems.First;
   fConnection.StartTransaction;
