@@ -211,9 +211,9 @@ begin
   AppendRows(aConnection, 'Items', [
     { } [1, 25, 100.00, Null(), 20],
     { } [1, 2, 90.00, Null(), 1],
-    { } [1, 99, 120.00, Null(), 4],
+    { } [1, 3, 120.00, Null(), 4],
     { } [2, 21, 100.00, Null(), 12],
-    { } [2, 31, 150.00, Null(), 3],
+    { } [2, 15, 150.00, Null(), 3],
     { } [5, 22, 20.00, Null(), 50],
     { } [5, 19, 170.00, Null(), 5],
     { } [5, 9, 25.00, Null(), 32],
@@ -248,6 +248,7 @@ begin
   // ----------------------------------------------------
   AppendRows(aConnection, 'Products', [
     { } [2, 'transport service', 0],
+    { } [3, 'sport shoes', 1],
     { } [5, 'orange sweater', 1],
     { } [6, 'navy wallet', 1],
     { } [7, 'blue shawl', 1],
@@ -256,14 +257,13 @@ begin
     { } [11, 'brown boots', 1],
     { } [12, 'green cap', 0],
     { } [13, 'bussines watch', 0],
+    { } [15, 'men''s jacket', 1],
     { } [18, 'originals tracksuit', 1],
     { } [19, 'winter boy coat', 1],
     { } [21, 'violet jeans trousers', 1],
     { } [22, 'green socks pack', 0],
     { } [23, 'sport shorts', 0],
-    { } [25, 'blue jeans', 1],
-    { } [31, 'men''s jacket', 1],
-    { } [99, 'sport shoes', 1]]);
+    { } [25, 'blue jeans', 1]]);
   // ----------------------------------------------------
   aConnection.Commit;
 end;
