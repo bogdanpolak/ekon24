@@ -120,6 +120,7 @@ begin
     oParams.DriverID := 'SQLite';
     oParams.Database := fDatabaseFullPath;
     oParams.OpenMode := omCreateUTF8;
+    oParams.LockingMode := lmNormal;
     oDef.MarkPersistent;
     oDef.Apply;
   end;
