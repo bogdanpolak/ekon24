@@ -29,6 +29,7 @@ type
     function OpenConnection(aOwner: TComponent): TFDConnection;
     procedure CreateTables(conn: TFDConnection);
     procedure InsertData(aConnection: TFDConnection);
+    procedure Change_OpenMode(aOpenMode: TFDSQLiteOpenMode);
   public
     constructor Create;
     class procedure Run(); static;
@@ -60,7 +61,7 @@ var
   databasePath: string;
 begin
   exePath := ExtractFilePath(ParamStr(0));
-  folderPath := TPath.Combine(exePath,DatabaseFolder);
+  folderPath := TPath.Combine(exePath, DatabaseFolder);
   databasePath := TPath.Combine(folderPath, DatabaseFileName);
   fDatabaseFullPath := CanonicalizePath(databasePath);
 end;
@@ -119,11 +120,24 @@ begin
     oParams := TFDPhysSQLiteConnectionDefParams(oDef.Params);
     oParams.DriverID := 'SQLite';
     oParams.Database := fDatabaseFullPath;
-    oParams.OpenMode := omCreateUTF8;
+    oParams.OpenMode := omReadWrite;
     oParams.LockingMode := lmNormal;
     oDef.MarkPersistent;
     oDef.Apply;
   end;
+end;
+
+procedure TDatabaseGenerator.Change_OpenMode(aOpenMode: TFDSQLiteOpenMode);
+var
+  oDef: IFDStanConnectionDef;
+  oParams: TFDPhysSQLiteConnectionDefParams;
+begin
+  oDef := FDManager.ConnectionDefs.FindConnectionDef(ConnectionName);
+  Assert(oDef <> nil,
+    Format('Not found connection definition "%s" (should exists)',
+    [ConnectionName]));
+  TFDPhysSQLiteConnectionDefParams(oDef.Params).OpenMode := aOpenMode;
+  oDef.Apply;
 end;
 
 procedure TDatabaseGenerator.DeleteExistingDatabase();
@@ -136,9 +150,11 @@ function TDatabaseGenerator.OpenConnection(aOwner: TComponent): TFDConnection;
 begin
   if not DirectoryExists(DatabaseFolder) then
     CreateDir(DatabaseFolder);
+  Change_OpenMode(omCreateUTF8);
   Result := TFDConnection.Create(nil);
   Result.ConnectionDefName := ConnectionName;
   Result.Open();
+  Change_OpenMode(omReadWrite);
 end;
 
 const
@@ -215,10 +231,10 @@ begin
     { } ['standard', 1200.00, 2],
     { } ['standard', 2000.00, 3],
     { } ['standard', 3000.00, 4],
-    { } ['silver',  800.00, 2],
+    { } ['silver', 800.00, 2],
     { } ['silver', 1500.00, 3],
     { } ['silver', 2000.00, 5],
-    { } ['gold',  700.00, 2],
+    { } ['gold', 700.00, 2],
     { } ['gold', 1000.00, 3],
     { } ['gold', 1400.00, 5],
     { } ['gold', 1900.00, 8]]);
