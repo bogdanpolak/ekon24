@@ -11,11 +11,13 @@ uses
   TestInsight.DUnitX,
   {$ELSE}
   DUnitX.Loggers.Console,
+  DUnitX.Loggers.Xml.NUnit,
   {$ENDIF }
   DUnitX.TestFramework,
   Test.DataModuleOrders in 'Test.DataModuleOrders.pas',
   DataModule.Orders in 'src\DataModule.Orders.pas',
-  DataModule.Connection in 'src\DataModule.Connection.pas';
+  DataModule.Connection in 'src\DataModule.Connection.pas',
+  ItemRecord in 'src\ItemRecord.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}

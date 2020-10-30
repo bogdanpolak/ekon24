@@ -6,13 +6,16 @@ uses
   System.SysUtils,
   System.Classes,
   System.Variants,
+  System.Math,
   FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
   FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.SQLite,
   FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
   FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.ConsoleUI.Wait, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet,
-  FireDAC.Comp.Client, FireDAC.VCLUI.Wait;
+  FireDAC.Comp.Client, FireDAC.VCLUI.Wait,
+  {}
+  ItemRecord;
 
 type
   TDataModuleOrders = class
@@ -25,10 +28,18 @@ type
     fdqOrderItems: TFDQuery;
     constructor Create(aConnection: TFDConnection);
     destructor Destroy; override;
+    function AddProduct(const aName: string; aAllowDeduction: boolean): integer;
+    procedure AddCustomer(const aCustomerId: string; const aName: string;
+      const aLevel: string);
+    function AddOrder(const aCustomerId: string; aOrderDate: TDate;
+      Items: TArray<TItemRecord>): integer;
+    procedure RemoveProduct(aProductId: integer);
+    procedure RemoveOrder(const aOrderId: integer);
+    procedure RemoveCustomer(const aCustomerId: string);
     function GetCustomerLevel(const aCustomerId: String): String;
-    procedure UpdateOrderDiscount(const aOrderId: Integer;
-      aGrantedDiscount: Integer);
-    function CalculateOrderTotalValue(aOrderId: Integer): Currency;
+    procedure UpdateOrderDiscount(const aOrderId: integer;
+      aGrantedDiscount: integer);
+    function CalculateOrderTotalValue(aOrderId: integer): Currency;
   end;
 
   ERepositoryError = class(Exception);
@@ -65,6 +76,61 @@ begin
   inherited;
 end;
 
+function TDataModuleOrders.AddProduct(const aName: string;
+  aAllowDeduction: boolean): integer;
+begin
+  fConnection.ExecSQL
+    ('INSERT INTO Products (Name,AllowDeduction) VAlUES (:name, :allow)',
+    [aName, IfThen(aAllowDeduction, 1, 0)]);
+  Result := fConnection.GetLastAutoGenValue('');
+end;
+
+procedure TDataModuleOrders.AddCustomer(const aCustomerId: string;
+  const aName: string; const aLevel: string);
+begin
+  fConnection.ExecSQL('INSERT INTO Customers (CustomerId,Name,Level)' +
+    ' VALUES (:customerid, :name, :level)', [aCustomerId, aName, aLevel]);
+end;
+
+function TDataModuleOrders.AddOrder(const aCustomerId: string;
+  aOrderDate: TDate; Items: TArray<TItemRecord>): integer;
+var
+  i: integer;
+begin
+  fConnection.StartTransaction;
+  fConnection.ExecSQL
+    ('INSERT INTO Orders (CustomerId, GrantedDiscount, OrderDate)' +
+    ' VALUES (:customerid, 0, :orderdate)', [aCustomerId, aOrderDate]);
+  Result := fConnection.GetLastAutoGenValue('');
+  for i := 0 to High(Items) do
+    fConnection.ExecSQL
+      ('INSERT INTO Items (OrderId, ProductId, UnitPrice, Units)' +
+      ' VALUES (:orderid, :productid, :unitprice, :units)',
+      [Result, Items[i].ProductId, Items[i].UnitPrice, Items[i].Units]);
+  fConnection.Commit;
+end;
+
+procedure TDataModuleOrders.RemoveProduct(aProductId: integer);
+begin
+  fConnection.ExecSQL('DELETE FROM Products WHERE ProductId = :productid',
+    [aProductId]);
+end;
+
+procedure TDataModuleOrders.RemoveCustomer(const aCustomerId: string);
+begin
+  fConnection.ExecSQL('DELETE FROM Customers WHERE CustomerId = :customerid',
+    [aCustomerId]);
+end;
+
+procedure TDataModuleOrders.RemoveOrder(const aOrderId: integer);
+begin
+  fConnection.StartTransaction;
+  fConnection.ExecSQL('DELETE FROM Items WHERE OrderId = :orderid', [aOrderId]);
+  fConnection.ExecSQL('DELETE FROM Orders WHERE OrderId = :orderid',
+    [aOrderId]);
+  fConnection.Commit;
+end;
+
 function TDataModuleOrders.GetCustomerLevel(const aCustomerId: String): String;
 var
   level: Variant;
@@ -78,8 +144,8 @@ begin
   Result := level;
 end;
 
-procedure TDataModuleOrders.UpdateOrderDiscount(const aOrderId: Integer;
-  aGrantedDiscount: Integer);
+procedure TDataModuleOrders.UpdateOrderDiscount(const aOrderId: integer;
+  aGrantedDiscount: integer);
 begin
   fConnection.ExecSQL
     ('UPDATE Orders SET GrantedDiscount = :Discount  WHERE OrderId = :OrderId',
@@ -102,17 +168,17 @@ begin
   Result := Round(Int(price * 100)) / 100;
 end;
 
-function TDataModuleOrders.CalculateOrderTotalValue(aOrderId: Integer)
+function TDataModuleOrders.CalculateOrderTotalValue(aOrderId: integer)
   : Currency;
 var
   customerId: string;
   level: string;
-  unitprice: Currency;
-  units: Integer;
+  UnitPrice: Currency;
+  Units: integer;
   totalBeforeDeduction: Currency;
   limit1: Currency;
   limit2: Currency;
-  discount: Integer;
+  discount: integer;
   totalAfterDeduction: Currency;
   isDeductable: boolean;
   deductedPrice: Currency;
@@ -126,9 +192,9 @@ begin
   totalBeforeDeduction := 0;
   while not fdqOrderItems.Eof do
   begin
-    unitprice := fdqOrderItems.FieldByName('UnitPrice').AsCurrency;
-    units := fdqOrderItems.FieldByName('Units').AsInteger;
-    totalBeforeDeduction := totalBeforeDeduction + unitprice * units;
+    UnitPrice := fdqOrderItems.FieldByName('UnitPrice').AsCurrency;
+    Units := fdqOrderItems.FieldByName('Units').AsInteger;
+    totalBeforeDeduction := totalBeforeDeduction + UnitPrice * Units;
     fdqOrderItems.Next;
   end;
   fdqThresholds.Open();
@@ -152,14 +218,14 @@ begin
   UpdateOrderDiscount(aOrderId, discount);
   while not fdqOrderItems.Eof do
   begin
-    unitprice := fdqOrderItems.FieldByName('UnitPrice').AsCurrency;
-    units := fdqOrderItems.FieldByName('Units').AsInteger;
+    UnitPrice := fdqOrderItems.FieldByName('UnitPrice').AsCurrency;
+    Units := fdqOrderItems.FieldByName('Units').AsInteger;
     isDeductable := (fdqOrderItems.FieldByName('AllowDeduction').AsInteger > 0);
     if isDeductable then
-      deductedPrice := RoundUnitPrice(unitprice * ((100 - discount) / 100))
+      deductedPrice := RoundUnitPrice(UnitPrice * ((100 - discount) / 100))
     else
-      deductedPrice := unitprice;
-    totalAfterDeduction := totalAfterDeduction + deductedPrice * units;
+      deductedPrice := UnitPrice;
+    totalAfterDeduction := totalAfterDeduction + deductedPrice * Units;
     fdqOrderItems.Edit;
     fdqOrderItems.FieldByName('DeductedPrice').AsCurrency := deductedPrice;
     fdqOrderItems.Post;
