@@ -29,6 +29,7 @@ type
     function OpenConnection(aOwner: TComponent): TFDConnection;
     procedure CreateTables(conn: TFDConnection);
     procedure InsertData(aConnection: TFDConnection);
+    procedure Change_OpenMode(aOpenMode: TFDSQLiteOpenMode);
   public
     constructor Create;
     class procedure Run(); static;
@@ -60,7 +61,7 @@ var
   databasePath: string;
 begin
   exePath := ExtractFilePath(ParamStr(0));
-  folderPath := TPath.Combine(exePath,DatabaseFolder);
+  folderPath := TPath.Combine(exePath, DatabaseFolder);
   databasePath := TPath.Combine(folderPath, DatabaseFileName);
   fDatabaseFullPath := CanonicalizePath(databasePath);
 end;
@@ -119,11 +120,24 @@ begin
     oParams := TFDPhysSQLiteConnectionDefParams(oDef.Params);
     oParams.DriverID := 'SQLite';
     oParams.Database := fDatabaseFullPath;
-    oParams.OpenMode := omCreateUTF8;
+    oParams.OpenMode := omReadWrite;
     oParams.LockingMode := lmNormal;
     oDef.MarkPersistent;
     oDef.Apply;
   end;
+end;
+
+procedure TDatabaseGenerator.Change_OpenMode(aOpenMode: TFDSQLiteOpenMode);
+var
+  oDef: IFDStanConnectionDef;
+  oParams: TFDPhysSQLiteConnectionDefParams;
+begin
+  oDef := FDManager.ConnectionDefs.FindConnectionDef(ConnectionName);
+  Assert(oDef <> nil,
+    Format('Not found connection definition "%s" (should exists)',
+    [ConnectionName]));
+  TFDPhysSQLiteConnectionDefParams(oDef.Params).OpenMode := aOpenMode;
+  oDef.Apply;
 end;
 
 procedure TDatabaseGenerator.DeleteExistingDatabase();
@@ -136,9 +150,11 @@ function TDatabaseGenerator.OpenConnection(aOwner: TComponent): TFDConnection;
 begin
   if not DirectoryExists(DatabaseFolder) then
     CreateDir(DatabaseFolder);
+  Change_OpenMode(omCreateUTF8);
   Result := TFDConnection.Create(nil);
   Result.ConnectionDefName := ConnectionName;
   Result.Open();
+  Change_OpenMode(omReadWrite);
 end;
 
 const
@@ -195,9 +211,9 @@ begin
   AppendRows(aConnection, 'Items', [
     { } [1, 25, 100.00, Null(), 20],
     { } [1, 2, 90.00, Null(), 1],
-    { } [1, 99, 120.00, Null(), 4],
+    { } [1, 3, 120.00, Null(), 4],
     { } [2, 21, 100.00, Null(), 12],
-    { } [2, 31, 150.00, Null(), 3],
+    { } [2, 15, 150.00, Null(), 3],
     { } [5, 22, 20.00, Null(), 50],
     { } [5, 19, 170.00, Null(), 5],
     { } [5, 9, 25.00, Null(), 32],
@@ -215,10 +231,10 @@ begin
     { } ['standard', 1200.00, 2],
     { } ['standard', 2000.00, 3],
     { } ['standard', 3000.00, 4],
-    { } ['silver',  800.00, 2],
+    { } ['silver', 800.00, 2],
     { } ['silver', 1500.00, 3],
     { } ['silver', 2000.00, 5],
-    { } ['gold',  700.00, 2],
+    { } ['gold', 700.00, 2],
     { } ['gold', 1000.00, 3],
     { } ['gold', 1400.00, 5],
     { } ['gold', 1900.00, 8]]);
@@ -232,6 +248,7 @@ begin
   // ----------------------------------------------------
   AppendRows(aConnection, 'Products', [
     { } [2, 'transport service', 0],
+    { } [3, 'sport shoes', 1],
     { } [5, 'orange sweater', 1],
     { } [6, 'navy wallet', 1],
     { } [7, 'blue shawl', 1],
@@ -240,14 +257,13 @@ begin
     { } [11, 'brown boots', 1],
     { } [12, 'green cap', 0],
     { } [13, 'bussines watch', 0],
+    { } [15, 'men''s jacket', 1],
     { } [18, 'originals tracksuit', 1],
     { } [19, 'winter boy coat', 1],
     { } [21, 'violet jeans trousers', 1],
     { } [22, 'green socks pack', 0],
     { } [23, 'sport shorts', 0],
-    { } [25, 'blue jeans', 1],
-    { } [31, 'men''s jacket', 1],
-    { } [99, 'sport shoes', 1]]);
+    { } [25, 'blue jeans', 1]]);
   // ----------------------------------------------------
   aConnection.Commit;
 end;
