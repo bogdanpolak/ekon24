@@ -33,7 +33,8 @@ uses
   Delphi.Mocks.VirtualInterface in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualInterface.pas',
   Delphi.Mocks.VirtualMethodInterceptor in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualMethodInterceptor.pas',
   Delphi.Mocks.WeakReference in '..\components\Delphi-Mocks\Delphi.Mocks.WeakReference.pas',
-  Delphi.Mocks.When in '..\components\Delphi-Mocks\Delphi.Mocks.When.pas';
+  Delphi.Mocks.When in '..\components\Delphi-Mocks\Delphi.Mocks.When.pas',
+  Test.DelphiMocks in 'Test.DelphiMocks.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}

@@ -45,3 +45,4 @@ initialization
 TDUnitX.RegisterTestFixture(TTestDiscountCalculator);
 
 end.
+
