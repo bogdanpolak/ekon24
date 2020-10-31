@@ -17,7 +17,25 @@ uses
   Test.DataModuleOrders in 'Test.DataModuleOrders.pas',
   DataModule.Orders in 'src\DataModule.Orders.pas',
   DataModule.Connection in 'src\DataModule.Connection.pas',
-  ItemRecord in 'src\ItemRecord.pas';
+  ItemRecord in 'src\ItemRecord.pas',
+  Delphi.Mocks.AutoMock in '..\components\Delphi-Mocks\Delphi.Mocks.AutoMock.pas',
+  Delphi.Mocks.Behavior in '..\components\Delphi-Mocks\Delphi.Mocks.Behavior.pas',
+  Delphi.Mocks.Expectation in '..\components\Delphi-Mocks\Delphi.Mocks.Expectation.pas',
+  Delphi.Mocks.Helpers in '..\components\Delphi-Mocks\Delphi.Mocks.Helpers.pas',
+  Delphi.Mocks.Interfaces in '..\components\Delphi-Mocks\Delphi.Mocks.Interfaces.pas',
+  Delphi.Mocks.MethodData in '..\components\Delphi-Mocks\Delphi.Mocks.MethodData.pas',
+  Delphi.Mocks.ObjectProxy in '..\components\Delphi-Mocks\Delphi.Mocks.ObjectProxy.pas',
+  Delphi.Mocks.ParamMatcher in '..\components\Delphi-Mocks\Delphi.Mocks.ParamMatcher.pas',
+  Delphi.Mocks in '..\components\Delphi-Mocks\Delphi.Mocks.pas',
+  Delphi.Mocks.Proxy in '..\components\Delphi-Mocks\Delphi.Mocks.Proxy.pas',
+  Delphi.Mocks.Proxy.TypeInfo in '..\components\Delphi-Mocks\Delphi.Mocks.Proxy.TypeInfo.pas',
+  Delphi.Mocks.ReturnTypePatch in '..\components\Delphi-Mocks\Delphi.Mocks.ReturnTypePatch.pas',
+  Delphi.Mocks.Utils in '..\components\Delphi-Mocks\Delphi.Mocks.Utils.pas',
+  Delphi.Mocks.Validation in '..\components\Delphi-Mocks\Delphi.Mocks.Validation.pas',
+  Delphi.Mocks.VirtualInterface in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualInterface.pas',
+  Delphi.Mocks.VirtualMethodInterceptor in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualMethodInterceptor.pas',
+  Delphi.Mocks.WeakReference in '..\components\Delphi-Mocks\Delphi.Mocks.WeakReference.pas',
+  Delphi.Mocks.When in '..\components\Delphi-Mocks\Delphi.Mocks.When.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
