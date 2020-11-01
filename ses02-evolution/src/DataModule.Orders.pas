@@ -152,17 +152,6 @@ begin
     [aGrantedDiscount, aOrderId]);
 end;
 
-type
-  TCurrencyRecordHelper = record helper for Currency
-    function IsInRange(aLimit1: Currency; aLimit2: Currency): boolean;
-  end;
-
-function TCurrencyRecordHelper.IsInRange(aLimit1: Currency;
-  aLimit2: Currency): boolean;
-begin
-  Result := (aLimit1 <= self) and (self < aLimit2);
-end;
-
 function RoundUnitPrice(price: Currency): Currency;
 begin
   Result := Round(Int(price * 100)) / 100;
@@ -206,7 +195,7 @@ begin
   begin
     limit2 := fdqThresholds.FieldByName('LimitBottom').AsCurrency;
     if (level <> fdqThresholds.FieldByName('Level').AsString) or
-      (totalBeforeDeduction.IsInRange(limit1, limit2)) then
+      ((limit1 <= totalBeforeDeduction) and (totalBeforeDeduction < limit2)) then
       break;
     discount := fdqThresholds.FieldByName('Discount').AsInteger;
     limit1 := limit2;
