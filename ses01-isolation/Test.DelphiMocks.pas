@@ -10,15 +10,14 @@ uses
   Delphi.Mocks;
 
 type
-{$M+}
-  IProcessor = interface
+  IProcessor = interface(IInvokable)
     ['{69162E72-8C1E-421B-B970-15230BBB3B2B}']
     function GetString(aIdx: Integer): string;
     function ConvertStringToInt(const aText: string;
       out aValue: Integer): boolean;
     function StringListToArray(const sl: TStringList): TArray<String>;
   end;
-{$M-}
+
 {$M+}
 
   [TestFixture]
@@ -40,6 +39,8 @@ type
     procedure GetString_WillExecute_WhenIt0IsAny;
     procedure ConvertStringToInt_WillExecute;
     procedure StringListToArray_WillExecute;
+    // ------------------------------------
+    procedure VerifyBehaviour;
   end;
 {$M-}
 
@@ -61,13 +62,13 @@ begin
 end;
 
 // -------------------------------------------------------------------
-// Tests
+// Test Mock Setup
 // -------------------------------------------------------------------
 
 procedure TestDelphiMocks.GetString_WillReturnDefault;
 begin
-  // fProcessorMock.Setup.WillReturnDefault('GetString', 'Hello');
-  fProcessorMock.Setup.WillReturn('Hello').When.GetString(It0.IsAny<Integer>);
+  fProcessorMock.Setup.WillReturnDefault('GetString', 'Hello');
+  // fProcessorMock.Setup.WillReturn('Hello').When.GetString(It0.IsAny<Integer>);
   Assert.AreEqual('Hello', fProcessorMock.Instance.GetString(0));
 end;
 
@@ -143,6 +144,72 @@ begin
   fStringList.Add('Adam Tornhill');
   stringArr := fProcessor.StringListToArray(fStringList);
   Assert.AreEqual('"Michael Feathers"', stringArr[1])
+end;
+
+// -------------------------------------------------------------------
+// Test Mock Behavoiur
+// -------------------------------------------------------------------
+
+type
+  IProductRepository = interface(IInvokable)
+    procedure TransactionStart;
+    function AddProduct(const aProductName: string;
+    AListPice: Currency): Integer;
+    procedure TransactionCommit;
+  end;
+
+  TVariantArray = TArray<Variant>;
+
+function AddProducts(const aRepository: IProductRepository;
+const aProducts: TArray<TVariantArray>): TArray<Integer>;
+var
+  iRow: Integer;
+  aName: string;
+  aPrice: Currency;
+  iCount: Integer;
+begin
+  Result := [];
+  if Length(aProducts) > 0 then
+  begin
+    aRepository.TransactionStart();
+    for iRow := 0 to High(aProducts) do
+    begin
+      aName := aProducts[iRow, 0];
+      aPrice := aProducts[iRow, 1];
+      if (Trim(aName) <> '') or (aPrice >= 0) then
+      begin
+        iCount := Length(Result);
+        SetLength(Result, iCount+1);
+        Result[iCount] := aRepository.AddProduct(aName,aPrice);
+      end;
+    end;
+    aRepository.TransactionCommit();
+  end;
+end;
+
+procedure TestDelphiMocks.VerifyBehaviour;
+var
+  mock: TMock<IProductRepository>;
+  repo: IProductRepository;
+  productIds: TArray<Integer>;
+begin
+  // Create mock --------------------------
+  mock := TMock<IProductRepository>.Create();
+  mock.Setup.WillReturnNil.When.AddProduct(It0.IsAny<string>,
+    It0.IsAny<Currency>);
+  // Define expected behaviour --------------------------
+  mock.Setup.Expect.Once.When.TransactionStart;
+  mock.Setup.Expect.Once.When.TransactionCommit;
+  mock.Setup.Expect.Between(2, 3).When.AddProduct(It0.IsAny<string>,
+    It0.IsAny<Currency>);
+  // Act --------------------------
+  repo := mock;
+  productIds := AddProducts(repo, [
+  { } ['winter boy coat', 169.00],
+  { } ['green socks pack 6 pack', 14.00]]);
+  // Assert/Verify --------------------------
+  mock.Verify();
+  Assert.Pass();
 end;
 
 initialization
