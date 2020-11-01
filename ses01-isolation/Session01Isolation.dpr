@@ -15,7 +15,26 @@ uses
   DUnitX.TestFramework,
   Test.DiscountCalculator in 'Test.DiscountCalculator.pas',
   DataModule.Main in 'src\DataModule.Main.pas',
-  DiscountCalculator in 'src\DiscountCalculator.pas';
+  DiscountCalculator in 'src\DiscountCalculator.pas',
+  Delphi.Mocks.AutoMock in '..\components\Delphi-Mocks\Delphi.Mocks.AutoMock.pas',
+  Delphi.Mocks.Behavior in '..\components\Delphi-Mocks\Delphi.Mocks.Behavior.pas',
+  Delphi.Mocks.Expectation in '..\components\Delphi-Mocks\Delphi.Mocks.Expectation.pas',
+  Delphi.Mocks.Helpers in '..\components\Delphi-Mocks\Delphi.Mocks.Helpers.pas',
+  Delphi.Mocks.Interfaces in '..\components\Delphi-Mocks\Delphi.Mocks.Interfaces.pas',
+  Delphi.Mocks.MethodData in '..\components\Delphi-Mocks\Delphi.Mocks.MethodData.pas',
+  Delphi.Mocks.ObjectProxy in '..\components\Delphi-Mocks\Delphi.Mocks.ObjectProxy.pas',
+  Delphi.Mocks.ParamMatcher in '..\components\Delphi-Mocks\Delphi.Mocks.ParamMatcher.pas',
+  Delphi.Mocks in '..\components\Delphi-Mocks\Delphi.Mocks.pas',
+  Delphi.Mocks.Proxy in '..\components\Delphi-Mocks\Delphi.Mocks.Proxy.pas',
+  Delphi.Mocks.Proxy.TypeInfo in '..\components\Delphi-Mocks\Delphi.Mocks.Proxy.TypeInfo.pas',
+  Delphi.Mocks.ReturnTypePatch in '..\components\Delphi-Mocks\Delphi.Mocks.ReturnTypePatch.pas',
+  Delphi.Mocks.Utils in '..\components\Delphi-Mocks\Delphi.Mocks.Utils.pas',
+  Delphi.Mocks.Validation in '..\components\Delphi-Mocks\Delphi.Mocks.Validation.pas',
+  Delphi.Mocks.VirtualInterface in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualInterface.pas',
+  Delphi.Mocks.VirtualMethodInterceptor in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualMethodInterceptor.pas',
+  Delphi.Mocks.WeakReference in '..\components\Delphi-Mocks\Delphi.Mocks.WeakReference.pas',
+  Delphi.Mocks.When in '..\components\Delphi-Mocks\Delphi.Mocks.When.pas',
+  Test.DelphiMocks in 'Test.DelphiMocks.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
