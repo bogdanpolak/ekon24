@@ -1,0 +1,156 @@
+-------------------------------------------------------------------------
+Interface
+-------------------------------------------------------------------------
+
+type
+  IProcessor = interface(IInvokable)
+    ['{69162E72-8C1E-421B-B970-15230BBB3B2B}']
+    function GetString(aIdx: Integer): string;
+    function ConvertStringToInt(const aText: string;
+      out aValue: Integer): boolean;
+    function StringListToArray(const sl: TStringList): TArray<String>;
+  end;
+
+-------------------------------------------------------------------------
+Setuping mocks
+-------------------------------------------------------------------------
+
+[WillReturn]
+  fProcessorMock.Setup.WillReturn('item-01').When.GetString(1);
+  fProcessor.GetString(1);  // 'item-01'
+
+[WillReturnDefault]
+  fProcessorMock.Setup.WillReturnDefault('GetString', 'Hello');
+  // fProcessorMock.Setup.WillReturn('Hello')
+  //   .When.GetString(It0.IsAny<Integer>);
+  fProcessorMock.Instance.GetString(99); // 'Hello'
+
+[WillExecute]
+  fProcessorMock.Setup.WillExecute('GetString',
+    function(const args: TArray<TValue>; const ReturnType: TRttiType): TValue
+    begin
+      // args[0] is the Self interface reference - here IProcessor01
+      case args[1].AsInteger of
+        0:
+          Result := '--select-item--';
+        1 .. 9:
+          Result := Format('item-%s', [chr(ord('A') + args[1].AsInteger - 1)]);
+      else
+        Result := '--error--';
+      end;
+    end);
+  fProcessor.GetString(1);  // 'item-A'
+
+
+[WillExecute]
+  fProcessorMock.Setup.WillExecute(
+    function(const args: TArray<TValue>; const ReturnType: TRttiType): TValue
+    begin
+      Result := Format('item-%s', [chr(ord('A') + args[1].AsInteger - 1)]);
+    end).When.GetString(It0.IsAny<Integer>);
+  fProcessor.GetString(0);  // 'item-@'
+
+
+[WillExecute - method with out parameter]
+  fProcessorMock.Setup.WillExecute('ConvertStringToInt',
+    function(const args: TArray<TValue>; const ReturnType: TRttiType): TValue
+    var
+      value: Integer;
+      ok: boolean;
+    begin
+      ok := TryStrToInt(args[1].AsString, value);
+      if ok then
+        args[2] := value
+      else
+        args[2] := 0;
+      Result := ok;
+    end);
+  fProcessor.ConvertStringToInt('120', number);  // number = 120
+
+[WillExecute - methods with objects in the parameter / result]
+  fProcessorMock.Setup.WillExecute(
+    function(const args: TArray<TValue>; const ReturnType: TRttiType): TValue
+    var
+      arr: TArray<string>;
+    begin
+      arr := args[1].AsType<TStringList>.CommaText.Split([',']);
+      Result := TValue.From < TArray < string >> (arr);
+    end).When.StringListToArray(It0.IsAny<TStringList>);
+  fStringList.Add('Bogdan Polak');
+  fStringList.Add('Michael Feathers');
+  fStringList.Add('Adam Tornhill');
+  fProcessor.StringListToArray(fStringList);  // array of strings
+  // ["Bogdan Polak","Michael Feathers","Adam Tornhill"]
+
+
+
+
+-------------------------------------------------------------------------
+Verify behaviour
+-------------------------------------------------------------------------
+
+type
+  IProductRepository = interface(IInvokable)
+    procedure TransactionStart;
+    function AddProduct(const aProductName: string;
+    AListPice: Currency): Integer;
+    procedure TransactionCommit;
+  end;
+
+  TVariantArray = TArray<Variant>;
+
+function AddProducts(
+  const aRepository: IProductRepository;
+  const aProducts: TArray<TVariantArray>): TArray<Integer>;
+var
+  iRow: Integer;
+  aName: string;
+  aPrice: Currency;
+  iCount: Integer;
+begin
+  Result := [];
+  if Length(aProducts) > 0 then
+  begin
+    aRepository.TransactionStart();
+    for iRow := 0 to High(aProducts) do
+    begin
+      aName := aProducts[iRow, 0];
+      aPrice := aProducts[iRow, 1];
+      if (Trim(aName) <> '') or (aPrice >= 0) then
+      begin
+        iCount := Length(Result);
+        SetLength(Result, iCount+1);
+        Result[iCount] := aRepository.AddProduct(aName,aPrice);
+      end;
+    end;
+    aRepository.TransactionCommit();
+  end;
+end;
+
+-------------------------------------------------------------------------
+
+procedure TestDelphiMocks.VerifyBehaviour;
+var
+  mock: TMock<IProductRepository>;
+  repo: IProductRepository;
+  productIds: TArray<Integer>;
+begin
+  // Create mock --------------------------
+  mock := TMock<IProductRepository>.Create();
+  mock.Setup.WillReturnNil.When.AddProduct(It0.IsAny<string>,
+    It0.IsAny<Currency>);
+  // Define expected behaviour --------------------------
+  mock.Setup.Expect.Once.When.TransactionStart;
+  mock.Setup.Expect.Once.When.TransactionCommit;
+  mock.Setup.Expect.Between(2, 3).When.AddProduct(It0.IsAny<string>,
+    It0.IsAny<Currency>);
+  // Act --------------------------
+  repo := mock;
+  productIds := AddProducts(repo, [
+  { } ['winter boy coat', 169.00],
+  { } ['green socks pack 6 pack', 14.00]]);
+  // Assert/Verify --------------------------
+  mock.Verify();
+  Assert.Pass();
+end;
+
