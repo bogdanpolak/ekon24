@@ -43,7 +43,7 @@ constructor TMainDataModule.Create(aOwner: TComponent);
 begin
   inherited;
   FDConnection1 := TFDConnection.Create(self);
-  FDConnection1.ConnectionDefName := 'SQLIte_Ekon24';
+  FDConnection1.ConnectionDefName := 'SQLite_Ekon24';
   FDConnection1.LoginPrompt := False;
   fdqThresholds := BuildQuery(FDConnection1, 'SELECT * FROM Thresholds');
 end;
