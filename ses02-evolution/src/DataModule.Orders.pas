@@ -15,18 +15,20 @@ uses
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet,
   FireDAC.Comp.Client, FireDAC.VCLUI.Wait,
   {}
-  ItemRecord;
+  ItemRecord,
+  Repository;
 
 type
   TDataModuleOrders = class
   private
     fConnection: TFDConnection;
+    fDiscountTableRepository: IDiscountTableRepository;
     fOwner: TComponent;
     function BuildFDQuery(const aSql: string): TFDQuery;
   public
-    fdqThresholds: TFDQuery;
     fdqOrderItems: TFDQuery;
-    constructor Create(aConnection: TFDConnection);
+    constructor Create(aConnection: TFDConnection;
+      aDiscountTableRepository: IDiscountTableRepository);
     destructor Destroy; override;
     function AddProduct(const aName: string; aAllowDeduction: boolean): integer;
     procedure AddCustomer(const aCustomerId: string; const aName: string;
@@ -46,6 +48,8 @@ type
 
 implementation
 
+uses Domain.DiscountTable;
+
 function TDataModuleOrders.BuildFDQuery(const aSql: string): TFDQuery;
 begin
   Result := TFDQuery.Create(fOwner);
@@ -53,13 +57,12 @@ begin
   Result.SQL.Text := aSql;
 end;
 
-constructor TDataModuleOrders.Create(aConnection: TFDConnection);
+constructor TDataModuleOrders.Create(aConnection: TFDConnection;
+  aDiscountTableRepository: IDiscountTableRepository);
 begin
   fConnection := aConnection;
+  fDiscountTableRepository := aDiscountTableRepository;
   fOwner := TComponent.Create(nil);
-  fdqThresholds := BuildFDQuery
-    ('SELECT Level, LimitBottom, Discount FROM Thresholds' +
-    ' ORDER BY Level, LimitBottom');
   fdqOrderItems := BuildFDQuery
     ('SELECT' +
     ' Items.ProductId, Items.UnitPrice, Items.DeductedPrice, Items.Units,' +
@@ -171,6 +174,7 @@ var
   totalAfterDeduction: Currency;
   isDeductable: boolean;
   deductedPrice: Currency;
+  discountTable: TDiscountTable;
 begin
   fdqOrderItems.ParamByName('OrderId').AsInteger := aOrderId;
   fdqOrderItems.Open();
@@ -186,21 +190,10 @@ begin
     totalBeforeDeduction := totalBeforeDeduction + UnitPrice * Units;
     fdqOrderItems.Next;
   end;
-  fdqThresholds.Open();
-  fdqThresholds.First;
-  fdqThresholds.Locate('Level', level);
-  limit1 := 0;
-  discount := 0;
-  while not fdqThresholds.Eof do
-  begin
-    limit2 := fdqThresholds.FieldByName('LimitBottom').AsCurrency;
-    if (level <> fdqThresholds.FieldByName('Level').AsString) or
-      ((limit1 <= totalBeforeDeduction) and (totalBeforeDeduction < limit2)) then
-      break;
-    discount := fdqThresholds.FieldByName('Discount').AsInteger;
-    limit1 := limit2;
-    fdqThresholds.Next;
-  end;
+  // ----------
+  discountTable := fDiscountTableRepository.Get(level);
+  discount := discountTable.CalculateDiscount(totalBeforeDeduction);
+  // ----------
   totalAfterDeduction := 0;
   fdqOrderItems.First;
   fConnection.StartTransaction;

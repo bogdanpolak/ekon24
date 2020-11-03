@@ -36,7 +36,12 @@ uses
   Delphi.Mocks.VirtualInterface in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualInterface.pas',
   Delphi.Mocks.VirtualMethodInterceptor in '..\components\Delphi-Mocks\Delphi.Mocks.VirtualMethodInterceptor.pas',
   Delphi.Mocks.WeakReference in '..\components\Delphi-Mocks\Delphi.Mocks.WeakReference.pas',
-  Delphi.Mocks.When in '..\components\Delphi-Mocks\Delphi.Mocks.When.pas';
+  Delphi.Mocks.When in '..\components\Delphi-Mocks\Delphi.Mocks.When.pas',
+  Domain.DiscountTable in 'src\Domain\Domain.DiscountTable.pas',
+  Repository.DiscountTable in 'src\Repositories\Repository.DiscountTable.pas',
+  Repository in 'src\Repositories\Repository.pas',
+  Helper.Currency in 'src\Helper.Currency.pas',
+  Domain.Order in 'src\Domain\Domain.Order.pas';
 
 procedure ExecuteTestProject;
 {$IFNDEF TESTINSIGHT}
